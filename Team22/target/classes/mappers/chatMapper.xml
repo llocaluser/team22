@@ -32,6 +32,7 @@
   	where room_id = #{room_id}  	
   </select>
   
+  
   <!-- 채팅방 번호로 판매글 제목 조회 -->
   <select id="selectTitle" resultType="String">
   	select p.product_title
@@ -42,8 +43,16 @@
   </select>
   
   
-  
-  
+  <!-- 회원이 참여한 채팅방 리스트 -->
+  <select id ="selectChatList" parameterType="String" resultType="chatRoomVO">
+  	SELECT cr.room_id, cr.product_num, p.product_seller, p.product_title, m.member_nickname
+  	FROM chat_room cr
+  	JOIN product p ON cr.product_num = p.product_num
+  	JOIN member m ON p.product_seller = m.member_id
+  	WHERE cr.seller = #{id} OR cr.buyer = #{id}
+  	GROUP BY cr.room_id, cr.product_num, p.product_seller, p.product_title, m.member_nickname;
+  </select>
+
 
 <!-- chat_messsage -->
 
@@ -53,6 +62,12 @@
 	where room_id = #{room_id}
     order by chat_date
   </select>
+  
+ <!--  <select id="selectRoomId" resultType="chatMessageVO">
+  	select distinct (*) from chat_message
+	where room_id = #{room_id}
+    order by chat_date
+  </select> -->
   
   <!-- 채팅 입력하기 -->
   <insert id="insertChatDialog" parameterType="chatMessageVO">
@@ -73,6 +88,5 @@
 					group by cr.room_id)
   	order by chat_date desc
   </select>
-
-
+  
 </mapper>

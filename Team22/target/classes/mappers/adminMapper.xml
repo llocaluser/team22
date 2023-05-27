@@ -6,65 +6,251 @@
   
 <mapper namespace="com.itwillbs.mapper.adminMapper">
 	
-	<!-- 모든 회원 조회하기  -->
-	<select id="getMemberList" resultType="MemberVO">
+	<!-- 모든 회원 조회하기 + 검색 + 페이징  -->
+	<select id="getMemberList" parameterType="hashMap" resultType="MemberVO">
 		select * from member
+	<if test='searchType.equals("id")'>
+          where member_id LIKE concat('%', #{keyword}, '%')
+    </if>
+    <if test='searchType.equals("email")'>
+          where member_email LIKE concat('%', #{keyword}, '%')
+    </if>
+	     limit #{displayPost}, #{postNum}		
 	</select>
-	<!-- 모든 회원 조회하기  -->
 	
+	<!-- 모든 회원 수 + 검색적용 -->
+	<select id="searMemlist" parameterType="hashMap" resultType="int">
+	    select count(member_num) from member
+	<if test='searchType.equals("id")'>
+          where member_id LIKE concat('%', #{keyword}, '%')
+    </if>
+    <if test='searchType.equals("email")'>
+          where member_email LIKE concat('%', #{keyword}, '%')
+    </if>
+	</select>
+
+	
+	<!-- 회원 개인 조회  -->
+	  <select id="getmem" resultType="MemberVO">
+	     select * from member
+	     where member_num=#{member_num}
+	  </select>
+	  
 	<!-- 모든 회원 수(명) 조회  -->
 	  <select id="countMember" resultType="int">
 	    select count(member_num)
         from member	  
 	  </select>
-	<!-- 모든 회원 수(명) 조회  -->
+
 	
 	
-	<!-- 모든 상품 조회하기  -->
-	<select id="getProductList" resultType="ProductVO">
+	<!-- 모든 상품구매내역 조회  -->
+	  <select id="buyprodList" resultType="map">
+	   select t.buy_mem_id, t.sell_mem_id, p.product_cate, p.product_title,p.product_price, p.product_num
+       from trade t join product p
+       on t.prod_num = p.product_num
+       where t.type_div = 'prod';	
+	  </select>
+	  
+	  <!-- 모든 옥션구매 내역 조회  -->
+       <select id="buyauList" resultType="map">
+         select * 
+         from trade 
+         where type_div = 'au';
+       </select>
+       
+      <!-- 모든 랜덤구매 내역 조회  -->
+       <select id="buyranList" resultType="map">
+         select * 
+         from trade 
+         where type_div = 'ran';
+       </select>
+     
+     <!-- 모든 옥션구매 내역 조회  -->
+	<!--   <select id="buyauList" resultType="map">
+	   select t.buy_mem_id, t.sell_mem_id, t.product_title, a.au_category, a.au_num, a.au_bidPrice
+       from trade t join auction a
+       on a.au_num = t.au_num
+       where t.type_div = 'au'
+	  </select>  -->
+	
+	<!-- 모든 랜덤구매내역 조회  -->
+	<!--  <select id="buyranList" resultType="map">
+	   select t.buy_mem_id, t.sell_mem_id, t.product_title, r.ran_bidPrice, r.ran_num
+       from trade t join random r
+       on t.ran_num = r.ran_num
+       where t.type_div = 'ran'
+	  </select> -->
+	
+		
+	
+	<!-- 모든 판매 상품 조회하기  -->
+	 <select id="getProductList" resultType="ProductVO">
 		select * from product
+		where product_status = 0
+	</select> 
+	
+	<!-- 모든 판매 상품 조회하기 + 페이징 + 검색   -->
+	<select id="ProductList" parameterType="hashMap" resultType="ProductVO">
+		select * from product
+        where product_status = 0
+	 <if test='searchType.equals("id")'>
+       and product_seller LIKE concat('%', #{keyword}, '%')
+     </if>
+     <if test='searchType.equals("title")'>
+        and product_title LIKE concat('%', #{keyword}, '%')
+     </if>
+	     limit #{displayPost}, #{postNum}		
 	</select>
-	<!-- 모든 상품 조회하기  -->
+	
+	<!-- 모든 상품 수+ 검색적용 -->
+	<select id="searprodlist" parameterType="hashMap" resultType="int">
+	    select count(product_num) from product
+	    where product_status = 0
+	 <if test='searchType.equals("id")'>
+          and product_seller LIKE concat('%', #{keyword}, '%')
+     </if>
+     <if test='searchType.equals("title")'>
+          and product_title LIKE concat('%', #{keyword}, '%')
+     </if>
+	</select>
+	
+	
+	
+	
+	<!-- 모든 경매 상품 조회  -->  
+	 <select id="getAuctionList" resultType="AuctionVO">
+	    select DISTINCT * from auction
+	    where au_status = 0
+	    group by au_num
+	 </select>
+	  
+	 <!-- 모든 경매 조회하기 + 페이징 + 검색   -->
+	<select id="AuctionList" parameterType="hashMap" resultType="AuctionVO">
+		select DISTINCT * from auction
+        where au_status = 0
+	 <if test='searchType.equals("id")'>
+       and au_sellerId LIKE concat('%', #{keyword}, '%')
+     </if>
+     <if test='searchType.equals("title")'>
+        and au_title LIKE concat('%', #{keyword}, '%')
+     </if>
+	     limit #{displayPost}, #{postNum}
+	     group by au_num
+	</select>
+	
+	<!-- 모든 경매 수+ 검색적용 -->
+	<select id="searaulist" parameterType="hashMap" resultType="int">
+	    select DISTINCT * from auction
+	    where au_status = 0
+	 <if test='searchType.equals("id")'>
+          and au_sellerId LIKE concat('%', #{keyword}, '%')
+     </if>
+     <if test='searchType.equals("title")'>
+          and au_title LIKE concat('%', #{keyword}, '%')
+     </if>
+	</select>
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 <!-- 경매 상세페이지 -->
+	 <select id="audetail" resultType="AuctionVO">
+	   select *
+	   from auction
+	   where au_num = #{au_num}
+	   order by au_bidPrice desc
+	  </select>
+	 
+	<!-- 모든 랜덤 상품 조회  -->
+	  <select id="getRandomList" resultType="RandomVO">
+	    select DISTINCT * from random
+	    where ran_status = 0
+	    group by ran_num
+	  </select>
+	  
+	<!-- 랜덤 상세페이지 -->
+	 <select id="randetail" resultType="RandomVO">
+	   select *
+       from random
+       where ran_num = #{ran_num}
+       order by ran_bidPrice desc
+	  </select>
+	  
+	  
+	  
+	
 	
 	<!-- 모든 상품 개수 조회  -->
 	  <select id="countProduct" resultType="int">
 	    select count(product_num)
         from product
 	  </select>
-	<!-- 모든 상품 개수 조회  -->
-	
-	
-	<!-- 모든 구매내역 조회  -->
-	  <select id="getbuyList" resultType="map">
-	   select t.buy_mem_id, t.sell_mem_id, p.product_cate, p.product_title,p.product_price
-       from trade t join product p
-       on t.prod_num = p.product_num
-       where t.t_div = 1;	  
-	  </select>
-	<!-- 모든 구매내역 조회  -->
-	
-	<!-- 모든 판매내역 조회  -->
-	  <select id="getsellList" resultType="map">
-	   select t.buy_mem_id, t.sell_mem_id, p.product_cate, p.product_title,p.product_price
-       from trade t join product p
-       on t.prod_num = p.product_num
-       where t.t_div = 2;	  
-	  </select>	
-	<!-- 모든 판매내역 조회  -->
-	
+	  	
 	<!-- 모든 거래내역 수 조회  -->
 	<select id="countTrade" resultType="int">
 	  select count(t_num)
       from trade;	
 	</select>
-	<!-- 모든 거래내역 수 조회  -->
-	
-	
-	
-	
-	
 
 	
+	
+	<!-- 모든 문의사항 조회 + 검색 + 페이징 -->
+	<select id="getCsList" parameterType="hashMap" resultType="CustomerserviceVO">
+	  select * from customerservice
+	 <if test='searchType.equals("writer")'>
+          where mem_id LIKE concat('%', #{keyword}, '%')
+    </if>
+    <if test='searchType.equals("title")'>
+          where cs_sub LIKE concat('%', #{keyword}, '%')
+    </if> 
+	  order by cs_num desc
+	  limit #{displayPost}, #{postNum}
+	</select>
+	
+	<!-- 문의사항 수 + 검색 -->
+	 <select id="searCslist" parameterType="hashMap" resultType="int">
+	    select count(cs_num) from customerservice
+	  <if test='searchType.equals("writer")'>
+          where mem_id LIKE concat('%', #{keyword}, '%')
+      </if>
+      <if test='searchType.equals("title")'>
+          where cs_sub LIKE concat('%', #{keyword}, '%')
+      </if> 
+   </select>
+	
+	<!-- 문의사항 글개수 조회 -->
+	  <select id="countCs" resultType="int">
+	    select count(cs_num)
+	    from customerservice
+	  </select>
+	
+	
+	
+	<!-- 모든 공지사항 조회  + 검색 + 페이징(관리자)   -->
+	<select id="getNotiList" parameterType="hashMap" resultType="NoticeVO">
+	    select * from notice
+	 <if test='searchType.equals("writer")'>
+          where noti_title LIKE concat('%', #{keyword}, '%')
+     </if>
+	  order by noti_num desc
+	  limit #{displayPost}, #{postNum}
+	</select>
+	
+	<!--  공지사항 수 + 검색 -->
+	 <select id="searNotilist" parameterType="hashMap" resultType="int">
+	    select count(noti_num) from notice
+	 <if test='searchType.equals("writer")'>
+          where noti_title LIKE concat('%', #{keyword}, '%')
+     </if> 
+   </select>
+	
+
+
+
 	<!-- 공지사항 등록하기  -->
 	  <insert id="writeNotice">
 	    insert into notice (noti_title,noti_content,noti_image,noti_image1,noti_image2)
@@ -72,18 +258,34 @@
 	  </insert>	
 	<!-- 공지사항 등록하기  -->
 	
-	<!-- 모든 공지사항 조회하기  -->
-	    <select id="getNoticeList" resultType="NoticeVO">
-	      select * from notice  
-	    </select>
-	<!-- 모든 공지사항 조회하기  -->
 	
-	<!-- 공지사항 글 개수 조회 -->
-	    <select id="countNotice" resultType="int"> 
+	<!-- 모든 공지사항 조회하기 + 페이징 + 검색  -->
+	    <select id="getNoticeList" parameterType="hashMap" resultType="NoticeVO">
+	       select * from notice  
+          <if test='searchType.equals("all")'>
+            where noti_title LIKE concat('%', #{keyword}, '%')
+            or noti_content LIKE concat('%', #{keyword}, '%')
+          </if>
+	       order by noti_num desc
+	       limit #{displayPost}, #{postNum}
+	    </select>
+	
+	<!-- 공지사항 글 개수 조회 + 검색 적용 -->
+	    <select id="searcountNotice" parameterType="hashMap" resultType="int"> 
+	      select count(noti_num) from notice
+          <if test='searchType.equals("all")'>
+            where noti_title LIKE concat('%', #{keyword}, '%')
+            or noti_content LIKE concat('%', #{keyword}, '%')
+          </if>
+	    </select>
+
+	
+	<!-- 공지사항 수  -->
+	  <select id="countNotice" resultType="int"> 
 	      select count(noti_num)
           from notice;
-	    </select>
-	<!-- 공지사항 글 개수 조회 -->
+	  </select>
+	<!-- 공지사항 수  -->
 	
 	<!-- 공지사항 조회수 1증가  -->
 	   <update id="addReadcnt">
@@ -99,19 +301,26 @@
 	   </select>
 	<!-- 글 번호에 해당하는 글정보 조회  -->
 	
+	
 	<!-- 공지사항 수정하기  -->
-	   <update id="updateNotice">
-	      update notice set noti_title=#{noti_title},noti_content=#{noti_content}
-          where noti_num=#{noti_num}
-	   </update>	
-	<!-- 공지사항 수정하기  -->
+  <update id="updateNotice">
+     UPDATE notice
+     <set>
+         <if test="noti_title != null">noti_title = #{noti_title},</if>
+         <if test="noti_content != null">noti_content = #{noti_content},</if>
+         <if test="noti_image != null">noti_image = #{noti_image},</if>
+         <if test="noti_image1 != null">noti_image1 = #{noti_image1},</if>
+         <if test="noti_image2 != null">noti_image2 = #{noti_image2},</if>
+    </set>
+      WHERE noti_num = #{noti_num}
+  </update>
 	  
 	<!-- 공지사항 삭제하기  -->
 	   <delete id="deleteNotice">
         delete from notice
 	    where noti_num=#{noti_num}	   
 	   </delete>
-	<!-- 공지사항 삭제하기  -->
+
 	
 	
 

@@ -38,40 +38,59 @@
     
     <!-- 다른 회원 판매정보  -->
 	<select id="memProdList" resultType="com.market.domain.ProductVO">
-		select product_pic,product_title,product_price,product_date,product_status,product_num,product_seller
-		from product
-		where product_seller = #{id}
+		select p.product_pic,p.product_title,p.product_price,p.product_date,p.product_status,p.product_num,p.product_seller
+		from product p
+		where product_seller = #{id} and product_status = 0;
 	
 	</select>
 	<!-- 다른 회원 판매정보  -->
    
     <!-- 다른 회원 판매 후기 -->
     <select id="memProdReview" resultType="map">
-		select r.reviewer, r.reviewee, r.rv_content, m.member_pic, p.product_title, r.rv_score, p.product_num,
-		p.product_pic, t.t_div, t.type_div,m.member_nickname
-		from trade t
-		join product p on t.sell_mem_id = p.product_seller
-		join member m on t.buy_mem_id = m.member_id
-		join review r on r.reviewer = m.member_id
-		and r.rv_num = p.product_num
-		where reviewee = #{id};
+		SELECT r.reviewer, r.reviewee, r.rv_content, m.member_pic, p.product_title, r.rv_score, p.product_num,
+		p.product_pic, t.type_div, m.member_nickname
+		FROM review r
+		JOIN member m ON r.reviewee = m.member_id
+		JOIN trade t ON r.prod_num = t.prod_num
+		JOIN product p ON r.prod_num = p.product_num AND p.product_seller = t.sell_mem_id
+		WHERE r.reviewee = #{id};
 	</select>
     <!-- 다른 회원 판매 후기 -->
     
+    <!-- 로그인한 회원 정보 -->
     <select id="memberInfo" resultType="com.market.domain.MemberVO">
     	select *
     	from member
-    	where member_id = #{member_id}
+    	where member_id = #{id}
     
     </select>
     
-    <update id="memberInfoUpdate" parameterType="com.market.domain.MemberVO"> 
-    	update member
-    	set member_pass = #{member_pass}, member_phone = #{member_phone}, member_nickname = #{member_nickname}, member_email = #{member_email},
-    	member_address = #{member_address}, member_pic = #{member_pic},member_pay = #{member_pay}
-    	where member_id = #{member_id} and member_num = #{member_num}
+    <select id="userInfo" resultType="map">
+   	 select p.product_pic,p.product_title,p.product_price,p.product_date,p.product_status,p.product_num,
+   	 p.product_seller,m.member_pic,m.member_nickname
+	from product p join member m
+	on p.product_seller = m.member_id
+	where product_seller = #{id} 
+    </select>
     
-    </update>
+    <!-- 회원수정 -->
+	  <update id="memberInfoUpdate" parameterType="com.market.domain.MemberVO">
+	  update member
+	  <set>
+	    member_pass = #{member_pass},
+	    member_phone = #{member_phone},
+	    member_nickname = #{member_nickname},
+	    member_email = #{member_email},
+	    member_address = #{member_address},
+	    member_address2 = #{member_address2},
+	    member_address3 = #{member_address3}
+	    <if test="member_pic != null">
+	      , member_pic = #{member_pic}
+	    </if>
+	  </set>
+	  where member_id = #{member_id} and member_num = #{member_num}
+	</update>
+    <!-- 회원수정 -->
     
     <delete id="deleteMemPic" parameterType="String">
         DELETE FROM member WHERE member_id = #{id}
@@ -81,7 +100,6 @@
         SET member_pic = #{member_pic}
         WHERE member_id = #{id}
     </update>
-    
     
        <!-- 아이디 찾기 -->
   
@@ -107,4 +125,116 @@
 	select count(*) from member where member_email = #{memberEmail}
 	</select>
     
+    <!-- 회원탈퇴 -->
+    <delete id="memberDelete">
+    	delete from member
+    	where member_id = #{member_id} and member_pass = #{member_pass}
+    
+    </delete>
+    <!-- 회원탈퇴 -->
+    
+    <!-- 평점 -->
+    <select id="avgScore" resultType="double">
+		select avg(rv_score)
+		from review
+		group by reviewee
+		having reviewee = #{id}
+	</select>
+    <!-- 평점 -->
+    
+    <!-- 페이 충전 -->
+    <insert id="payCharge">
+		insert into pay_charge (charge_amount,member_id)
+		values(#{charge_amount},#{member_id	})
+	</insert>
+    <!-- 페이 충전 -->
+    
+    <!-- 페이 출금 -->
+    <insert id="insertPayWithdraw">
+    	insert into pay_charge (withdraw_amount,member_id)
+		values(#{withdraw_amount},#{member_id })
+    </insert>
+    <!-- 페이 출금 -->
+    
+   <!-- 회원 잔액과 충전한 금액 합산 -->
+    <update id="memberPayCharge">
+		update member
+		set member_pay = member_pay + #{charge_amount}
+		where member_id = #{member_id}
+	</update>
+   <!-- 회원 잔액과 충전한 금액 합산 -->
+	
+	<update id="payWithdraw">
+		update member set
+		member_pay = member_pay - #{withdraw_amount},
+	    bank = #{bank},
+		account_number = #{account_number}
+		where member_id = #{member_id}
+	</update>    
+	
+	<!-- 회원의 거래내역 -->
+	<select id="countTrade" resultType="int">
+		select count(*) from trade
+		where buy_mem_id = #{id} or sell_mem_id = #{id}
+	</select>
+	
+	<!-- 비밀번호 변경 -->
+	<update id="updatePwById" parameterType="com.market.domain.MemberVO">
+		update member set member_pass = #{member_pass} where member_id = #{member_id}
+	</update>
+
+	<select id ="readMemberById" resultType="MemberVO">
+			select *
+	    	from member
+	    	where member_id = #{id}
+	</select>
+	
+	<!-- 충전 내역  -->
+	<select id="chargingDetails" resultType="map">
+		select m.member_id,m.member_nickname, p.charge_amount, p.charge_date_time, m.member_name
+		from member m join pay_charge p
+		on m.member_id = p.member_id
+		where m.member_id = #{id} AND p.charge_amount IS NOT NULL
+		order by p.charge_date_time desc
+	</select>
+	<!-- 충전 내역  -->
+	
+	<!-- 출금 내역  -->
+	<select id="drawDetails" resultType="map">
+		select m.member_id,m.member_nickname, p.withdraw_amount, p.charge_date_time, m.member_name
+		from member m join pay_charge p
+		on m.member_id = p.member_id
+		where m.member_id = #{id} AND p.withdraw_amount IS NOT NULL and withdraw_amount > 0
+		order by p.charge_date_time desc
+	</select>
+	<!-- 출금 내역  -->
+	
+    <!-- 메인에서 검색 -->
+	<!-- <select id="allSerrch" resultType="map">
+		select ran_title, product_title, au_title
+		from member
+		WHERE
+	    <choose>
+	      <when test="selectType == 'ran_title'">
+	        ran_title LIKE CONCAT('%', #{searchKeyword}, '%')
+	      </when>
+	      <when test="selectType == 'product_title'">
+	        product_title LIKE CONCAT('%', #{searchKeyword}, '%')
+	      </when>
+	      <when test="selectType == 'au_title'">
+	        au_title LIKE CONCAT('%', #{searchKeyword}, '%')
+	      </when>
+	    </choose>
+	</select> -->
+
+	<!-- 메인에서 검색 -->
+	
+	<!-- 내 문의사항 -->
+	<select id="myCs" resultType="com.market.domain.CustomerserviceVO">
+		select *
+		from Customerservice
+		where mem_id = #{id}
+		order by cs_num desc
+	</select>
+	<!-- 내 문의사항 -->
 </mapper>

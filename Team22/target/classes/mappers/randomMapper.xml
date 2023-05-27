@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.market.mapper.randomMapper">
+
+	<insert id="rRegist">
+		insert into random(ran_price, ran_endTime, ran_sellerId, ran_pic, ran_maxPp, ran_title, ran_content, ran_bidPrice, ran_buyerId)
+		values(#{ran_price}, #{ran_endTime}, #{ran_sellerId}, #{ran_pic}, #{ran_maxPp}, #{ran_title}, #{ran_content}, #{ran_bidPrice}, #{ran_buyerId} )
+	</insert>
+	
+	<select id="nowBest" resultType="com.market.domain.RandomVO">
+		select * from random
+		where ran_num = (select ran_num
+						from random
+						where ran_status = 0
+						group by ran_num
+						order by count(ran_num) desc
+                		limit 1)
+		order by ran_maxPp desc
+		limit 1;
+	</select>
+
+	<select id="rList" resultType="com.market.domain.RandomVO">
+		select A.*, count(ran_num)-1 as count
+		from (select * from random order by ran_maxPp desc limit #{pageStart},#{pageSize}) A
+		where A.ran_status = 0
+		group by A.ran_num
+		order by A.ran_num desc
+	</select>
+	
+	<select id="countRan" resultType="int">
+		select count(distinct ran_num)
+		from random
+		where ran_status = 0
+	</select>
+	
+	<select id="countSearch" resultType="int">
+		select count(distinct ran_num)
+		from random
+		where ran_status = 0 and ${type} like CONCAT('%',#{search},'%')
+	</select>
+	
+	<select id="searchList" resultType="com.market.domain.RandomVO">
+		select A.*, count(ran_num)-1 as count
+		from (select * from random order by ran_maxPp desc limit #{pageStart},#{pageSize}) A
+		where A.ran_status = 0 and ${type} like CONCAT('%',#{search},'%')
+		group by A.ran_num
+		order by A.ran_num desc;
+	</select>
+	
+	<select id="rDetail" resultType="com.market.domain.RandomVO">
+		select * from random
+		where ran_num = #{ran_num} and ran_sellerId is not null
+	</select>
+	
+	<select id="countP" resultType="int">
+		select count(ran_num)-1 from random
+		where ran_num = #{ran_num}
+	</select>
+
+	<select id="getMPay" resultType="int">
+		select member_pay from member where member_id = #{member_id}
+	</select>
+	
+	<insert id="rBid">
+		insert into random(ran_num, ran_buyerId, ran_bidPrice, ran_price, ran_title)
+		values(#{ran_num}, #{ran_buyerId}, #{ran_bidPrice}, #{ran_price}, #{ran_title})
+	</insert>
+	
+	<update id="minusPay">
+		update member set member_pay = member_pay - #{mPay} 
+		where member_id = #{id}
+	</update>
+	
+	<select id="selectBuyer" resultType="String">
+		select ran_buyerId
+		from random where ran_num = #{ran_num}
+	</select>
+	
+	<select id="selectTrade" resultType="String">
+		select buy_mem_id from trade
+		where type_div = "ran" and ran_num = #{ran_num}
+	</select>
+	
+	<update id="updateRan">
+		update random set ran_status = 1
+		where ran_num = #{ran_num}
+	</update>
+	
+	<select id="selectWinner" resultType="com.market.domain.RandomVO">
+		select * from random
+		where ran_num = #{ran_num} and ran_sellerId is null
+		order by rand()
+		limit 1;
+	</select>
+	
+	<insert id="insertTrade">
+		insert into trade(buy_mem_id, sell_mem_id, prod_sell_date, type_div, product_title, ran_num)
+		values(#{ran_buyerId}, #{ran_sellerId}, now(), 'ran', #{ran_title}, #{ran_num})
+	</insert>
+	
+	<update id="plusPay">
+		update member set member_pay = member_pay + #{ran_price}
+		where member_id = #{ran_sellerId}
+	</update>
+	
+	<select id="myRan" resultType="com.market.domain.RandomVO">
+		select r2.ran_num, r2.ran_sellerId, r2.ran_pic, r2.ran_title, t.buy_mem_id as ran_buyerId, r2.ran_status
+		from random r1 join random r2
+		on r1.ran_num = r2.ran_num
+		join trade t
+		on t.ran_num = r1.ran_num
+		where r1.ran_buyerId = #{id} and r2.ran_sellerId is not null and r2.ran_status = 1
+		order by r2.ran_num desc;
+	</select>
+	
+	<update id="schedule" useGeneratedKeys="true" keyProperty="ran_num">
+		update random set ran_status = 2
+		<![CDATA[where ran_status = 0 and ran_num in (select distinct ran_num from (select ran_num
+									from random
+                                    where ran_endTime < now()) as tmp )]]>
+	</update>
+	
+	<select id="endNum" resultType="int">
+		select distinct ran_num from random
+		where ran_status = 2
+	</select>
+	
+	<update id="endPlusPay">
+		update member set member_pay = member_pay + (select distinct ran_bidPrice from random
+													 where ran_num = #{num})
+		where member_id in (select ran_buyerId from random where ran_num = #{num} and ran_sellerId is null);
+	</update>
+	
+	<update id="confirmRan">
+		update random set ran_status = 3
+		where ran_status = 2
+	</update>
+
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

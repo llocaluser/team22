@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.market.mapper.mainMapper">
+	<select id="selectProd" resultType="com.market.domain.ProductVO">
+		select * from product
+		where product_status=0
+		order by product_num desc
+		limit 9
+	</select>
+	
+	<select id="selectAu" resultType="com.market.domain.AuctionVO">
+		select * from auction
+		where au_status = 0
+		group by au_num
+		order by au_num desc
+		limit 9
+	</select>
+	
+	<select id="selectRan" resultType="com.market.domain.RandomVO">
+		select * from random
+		where ran_sellerId is not null and ran_status=0
+		group by ran_num
+		order by ran_num desc
+		limit 9
+	</select>
+
+
+</mapper>

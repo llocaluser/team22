@@ -7,43 +7,70 @@
 
 	<!-- 구매리뷰 정보 및 리스트 -->
 	<select id="buyReviewList" resultType="map">
-		SELECT DISTINCT r.reviewer, r.reviewee, r.rv_content, m.member_pic, p.product_title, r.rv_score, p.product_num,
-		p.product_pic, t.type_div
-		FROM review r
-		JOIN member m ON r.reviewer = m.member_id
-		JOIN product p ON r.reviewee = p.product_seller
-		and r.rv_num = p.product_num
-		JOIN trade t ON r.reviewer = t.buy_mem_id
-		WHERE reviewer = #{id} AND t.type_div = #{type_div};
+	SELECT DISTINCT t.buy_mem_id AS reviewer, r.reviewee AS reviewee, t.prod_num, t.au_num, t.ran_num, t.type_div, t.product_title, r.rv_content, p.product_pic, a.au_pic, rn.ran_pic
+	FROM trade t
+	JOIN review r ON t.buy_mem_id = r.reviewer AND t.sell_mem_id = r.reviewee AND (t.prod_num = r.prod_num OR t.au_num = r.au_num OR t.ran_num = r.ran_num)
+	LEFT JOIN product p ON t.prod_num = p.product_num
+	LEFT JOIN auction a ON t.au_num = a.au_num
+	LEFT JOIN random rn ON t.ran_num = rn.ran_num
+	WHERE t.buy_mem_id = #{id} AND (t.type_div = 'prod' OR t.type_div = 'au' OR t.type_div = 'ran');
 	</select>
+	<!-- <select id="buyReviewList" resultType="map">
+	SELECT DISTINCT t.buy_mem_id AS reviewer, r.reviewee AS reviewee, t.prod_num, t.au_num, t.ran_num, t.type_div, t.product_title,r.rv_content
+	FROM trade t
+	JOIN review r ON t.buy_mem_id = r.reviewer AND t.sell_mem_id = r.reviewee AND (t.prod_num = r.prod_num OR t.au_num = r.au_num OR t.ran_num = r.ran_num)
+	JOIN product p ON t.prod_num = p.product_num
+	WHERE t.buy_mem_id = #{id} AND (t.type_div = 'prod' OR t.type_div = 'au' OR t.type_div = 'ran');
+	</select> -->
 	<!-- 구매리뷰 정보 및 리스트 -->
 	
 	<!-- 판매리뷰 -->
 	<select id="tSellReview" resultType="map">
-		select r.reviewer, r.reviewee, r.rv_content, m.member_pic, p.product_title, r.rv_score, p.product_num,
-		p.product_pic, t.type_div
-		from trade t
-		join product p on t.sell_mem_id = p.product_seller
-		join member m on t.buy_mem_id = m.member_id
-		join review r on r.reviewer = m.member_id
-		and r.rv_num = p.product_num
-		where reviewee = #{id};
-				
+	SELECT DISTINCT t.buy_mem_id AS reviewer, t.sell_mem_id AS reviewee, t.prod_num, t.au_num, t.ran_num, t.type_div, t.product_title, r.rv_content, p.product_pic, a.au_pic, rn.ran_pic
+	FROM trade t
+	JOIN review r ON t.buy_mem_id = r.reviewer AND t.sell_mem_id = r.reviewee AND (t.prod_num = r.prod_num OR t.au_num = r.au_num OR t.ran_num = r.ran_num)
+	LEFT JOIN product p ON t.prod_num = p.product_num
+	LEFT JOIN auction a ON t.au_num = a.au_num
+	LEFT JOIN random rn ON t.ran_num = rn.ran_num
+	WHERE t.sell_mem_id = #{id} AND (t.type_div = 'prod' OR t.type_div = 'au' OR t.type_div = 'ran');
 	</select>
 	<!-- 판매리뷰 -->
-
 	
 	<!-- 구매내역  -->
 	<select id="buyList" resultType="map">
-		select t.t_num, t.buy_mem_id,t.sell_mem_id,t.type_div,p.product_title,t.prod_num,
-		p.product_price, p.product_pic,p.product_cate,m.member_nickname
-		from trade t
-		 join product p on t.sell_mem_id = p.product_seller
-         and t.prod_num = p.product_num 
-		 join member m on t.buy_mem_id = m.member_id
-		 where t.buy_mem_id = #{id} and type_div = #{type_div};
+		SELECT t.t_num, t.buy_mem_id, t.sell_mem_id, t.type_div, p.product_title, t.prod_num,
+        p.product_price, p.product_pic, p.product_cate, m.member_nickname
+		FROM trade t
+		JOIN product p ON t.prod_num = p.product_num
+		JOIN member m ON t.buy_mem_id = m.member_id
+		WHERE t.buy_mem_id = #{id} AND type_div = 'prod';
 	</select>
-	<!-- 구매내역  -->
+	<!-- 구매내역  --> 
+	
+	<!-- 경매 구매 내역  -->
+	<select id="myBuyAuction" resultType="map">
+		SELECT MAX(a.au_bidPrice) as au_bidPrice,a.au_num,a.au_sellerId, a.au_endPrice,a.au_pic,a.au_category,m.member_nickname,a.au_title,t.buy_mem_id
+		FROM trade t
+		JOIN auction a ON t.au_num = a.au_num and t.sell_mem_id = a.au_sellerId
+		JOIN member m ON t.buy_mem_id = m.member_id
+		WHERE t.buy_mem_id = #{id} AND type_div = 'au'
+		group by a.au_num
+		order by a.au_num desc;
+	</select>
+	<!-- 경매 구매 내역  --> 
+
+	<!-- 응모 구매 내역  -->
+	<select id="myBuyRandom" resultType="map">
+		SELECT r.ran_bidPrice as ran_bidPrice,r.ran_num,r.ran_sellerId, r.ran_Price,r.ran_pic,m.member_nickname,
+		r.ran_title,t.buy_mem_id
+		FROM trade t
+		JOIN random r ON t.ran_num = r.ran_num and t.sell_mem_id = r.ran_sellerId
+		JOIN member m ON t.buy_mem_id = m.member_id
+		WHERE t.buy_mem_id = #{id} AND type_div = 'ran'
+		group by r.ran_num
+		order by r.ran_num;
+	</select>
+	<!-- 응모 구매 내역  --> 
 	
 	<!-- 판매내역  -->
 	<select id="prodList" resultType="map">
@@ -53,52 +80,66 @@
 		 join product p on t.sell_mem_id = p.product_seller
          and t.prod_num = p.product_num
 		 join member m on t.buy_mem_id = m.member_id
-		 where t.sell_mem_id = p.product_seller and t.prod_num = p.product_num and type_div = #{type_div};
+		 where t.sell_mem_id = p.product_seller and t.prod_num = p.product_num and type_div = 'prod';
 	</select>
 	<!-- 판매내역  -->
 	
 	<!-- 구매 리뷰  -->
 	<insert id="insertReview">
-		insert into review(rv_num,reviewee, reviewer, rv_score, rv_content)
-		values(#{rv_num},#{reviewee},#{reviewer},#{rv_score},#{rv_content});
+		insert into review( reviewee, reviewer, rv_score, rv_content, prod_num,au_num,ran_num)
+				values(#{reviewee}, #{reviewer}, #{rv_score}, #{rv_content},#{prod_num},#{au_num},#{ran_num});
 	</insert>
 	<!-- 구매 리뷰  -->
 		
-	<!-- 판매자 온도  -->
+	<!-- 평점  -->
 	<select id="avgScore" resultType="double">
 		select avg(rv_score)
 		from review
 		group by reviewee
-		having reviewee = #{reviewee}
+		having reviewee = #{id}
 	</select>
-	<!-- 판매자 온도  -->
+	<!-- 평점  -->
 	
 	<!-- 내 판매 상품  -->
 	<select id="myProdList" resultType="com.market.domain.ProductVO">
-		select product_pic,product_title,product_price,product_date,product_status,product_num,product_seller
+		select product_pic,product_title,product_price,product_date,product_status,product_num,product_seller,product_readcount
 		from product
 		where product_seller = #{id}
 	
 	</select>
 	
+	<!-- 응모 신청 내역  -->
+	<select id="myBuyRandomList" resultType="com.market.domain.RandomVO">
+		select r1.ran_num,r1.ran_price,r1.ran_endTime,
+		r1.ran_buyerId,r2.ran_pic,r2.ran_sellerId,
+		r1.ran_maxPp,r1.ran_title,r1.ran_content,r1.ran_bidPrice,r1.ran_status
+		from random r1 join random r2
+		on r1.ran_num = r2.ran_num
+		where r1.ran_buyerId = #{id} and r1.ran_bidPrice != 0 and r2.ran_pic is not null
+		group by ran_num
+		order by ran_num desc;
+	</select>
+	<!-- 응모 신청 내역  -->
+	
 	<!-- 경매 신청 내역  -->
-	<select id="auBuyList" resultType="map">
-		select au_num, au_startPrice, au_endTime, au_sellerId, au_buyerId, max(au_bidPrice)as au_bidPrice, au_endPrice, au_pic,
-		au_status, au_title,au_content, au_category
-		from auction
-		where au_buyerId = #{id} and au_num is not null and au_bidPrice != 0
+	<select id="auBuyList" resultType="com.market.domain.AuctionVO">
+		select a1.au_num, a1.au_startPrice, a1.au_endTime, a1.au_sellerId, a1.au_buyerId, 
+		max(a1.au_bidPrice)as au_bidPrice, max(a2.au_bidPrice) as au_endPrice, a1.au_pic,
+		a1.au_status, a1.au_title,a1.au_content, a1.au_category
+		from auction a1 join auction a2
+		on a1.au_num = a2.au_num
+		where a1.au_buyerId = #{id} and a1.au_bidPrice > 0
 		group by au_num
 		order by au_num desc;
-
-		
 	</select>
 	<!-- 경매 신청 내역  -->
 	
 	<!-- 전체 경매 리스트  -->
 	<select id="getAList" resultType="com.market.domain.AuctionVO">
-		select max(au_bidPrice) as au_bidPrice
+		select max(au_bidPrice) as au_bidPrice,au_num, au_buyerId
 		from auction
 		group by au_num
+        having au_buyerId = #{id}
 		order by au_num desc;
 	</select>
 	<!-- 전체 경매 리스트  -->
@@ -135,9 +176,129 @@
 	</delete>
 	<!-- 마이페이지 찜 취소 -->
 	
+	<!-- 내 랜덤목록  -->
+	<select id="myRandomList" resultType="com.market.domain.RandomVO" >
+	select ran_num, ran_price, ran_endTime, ran_sellerId, ran_buyerId, ran_pic, ran_maxPp, ran_title, ran_content, ran_bidPrice, ran_status
+	from random
+	where ran_sellerId = #{id}
+	group by ran_num
+	order by ran_num desc;
+	</select>
+	<!-- 내 랜덤목록  -->
+	
+	<!-- 작성한 리뷰 삭제 -->
+	<delete id="deleteReview">
+		DELETE FROM review
+		WHERE prod_num = #{prod_num}
+	    OR au_num = #{au_num}
+	    OR ran_num = #{ran_num};
 
+	</delete>
+	<!-- 작성한 리뷰 삭제 -->
+	
 
-
-
+	<!-- 내가 등록한 판매상품 삭제 -->
+	<delete id="deleteProduct">
+		delete from product
+		where product_num = #{product_num} 
+	</delete>
+	<!-- 내가 등록한 판매상품 삭제 -->
+	
+	<!-- 내가 등록한 경매상품 삭제 -->
+	<delete id="deleteAuction">
+		delete from auction
+		where au_num = #{au_num} 
+	</delete>
+	<!-- 내가 등록한 경매상품 삭제 -->
+	
+	<!-- 내가 등록한 랜덤상품 삭제 -->
+	<delete id="deleteRandom">
+		delete from random
+		where ran_num = #{ran_num} 
+	</delete>
+	<!-- 내가 등록한 랜덤상품 삭제 -->
+	
+	<!-- 내가 판매한 상품 목록 -->
+	<select id="getSoldProduct" resultType="map">
+	select t.t_num, t.buy_mem_id, t.sell_mem_id, t.prod_num, t.prod_sell_date, t.type_div, t.product_title,
+	p.product_pic,p.product_status,p.product_price
+	from trade t join product p
+	on t.prod_num = p.product_num
+	where t.sell_mem_id = #{id};
+	</select>
+	<!-- 내가 판매한 상품 목록 -->
+	<!--  and p.product_status = 1 -->
+	
+	<!-- 내가 판매한 경매 목록 -->
+	<select id="getSoldAuction" resultType="map">
+	select distinct t.t_num, t.buy_mem_id, t.sell_mem_id, t.au_num, t.prod_sell_date, t.type_div, t.product_title,
+	a.au_pic,a.au_status,a.au_endPrice,a.au_endTime
+	from trade t join auction a
+	on t.au_num = a.au_num 
+	where t.sell_mem_id = #{id};
+	</select>
+	<!-- 내가 판매한 경매 목록 -->
+	<!-- and a.au_status = 2  -->
+	
+	<!-- 내가 판매한 응모 목록 -->
+	<select id="getSoldRandom" resultType="map">
+	select distinct t.t_num, t.buy_mem_id, t.sell_mem_id, t.ran_num, t.prod_sell_date, t.type_div, t.product_title,
+	r.ran_price, r.ran_maxPp, r.ran_bidPrice,r.ran_pic
+	from trade t join random r
+	on t.ran_num = r.ran_num and t.buy_mem_id = r.ran_buyerId
+	where t.sell_mem_id = #{id};
+	</select>
+	<!-- 내가 판매한 응모 목록 -->
+	<!-- and r.ran_status = 3  -->
+	<!--  경매완료 상품 삭제 -->
+		<delete id ="soldAuDelete">
+			  DELETE FROM auction
+  			  WHERE au_num = #{au_num};
+		</delete>
+	<!--  경매완료 상품 삭제 -->
+	
+	<!-- 판매완료 상품 삭제 -->
+		<delete id ="soldProdDelete">
+			  DELETE FROM product
+  			  WHERE product_num = #{prod_num};
+		</delete>
+	<!-- 판매완료 상품 삭제 -->
+	
+	<!-- 응모완료 상품 삭제 -->
+		<delete id ="soldRanDelete">
+			  DELETE FROM random
+  			  WHERE ran_num = #{ran_num};
+		</delete>
+	<!-- 응모완료 상품 삭제 -->
+	<!-- 판매확정 -->
+	<insert id="sellProd">
+		insert into trade (buy_mem_id,sell_mem_id,type_div,product_title,prod_num)
+			values (#{buy_mem_id},#{sell_mem_id},'prod',#{product_title},#{prod_num});
+	</insert>
+	<!-- 판매확정 -->
+	
+	<!-- 판매완료 확정 -->
+	<update id="productUpdate">
+	update product
+	set product_status = 1
+	where product_num = #{prod_num} 
+	</update>
+	<!-- 판매완료 확정 -->
+	
+	<!-- 판매완료 확인  -->
+		<select id="tradeInfo" resultType="com.market.domain.TradeVO">
+			select *
+			from trade
+			where prod_num = #{prod_num}
+		</select>
+	<!-- 판매완료 확인  -->
+	
+	<!-- 판매 된 상품인지 체크  -->
+	    <select id="getProductByNum" resultType="com.market.domain.ProductVO" >
+        SELECT *
+        FROM product
+        WHERE product_num = #{product_num}
+  	  </select>
+	<!-- 판매 된 상품인지 체크  -->
 	
 </mapper>

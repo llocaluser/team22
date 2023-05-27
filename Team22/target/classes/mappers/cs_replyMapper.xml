@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.itwillbs.mapper.cs_replyMapper">
+
+
+<!-- 댓글 조회 -->
+<select id="replyList" parameterType="int" resultType="Cs_replyVO">
+	select
+    re_rno, cs_num, re_content, re_date
+	from cs_reply
+    where cs_num = #{cs_num}		
+</select>
+
+<!-- 댓글 작성 -->
+<insert id="replyWrite" parameterType="Cs_replyVO">
+	insert into cs_reply(cs_num,re_content)
+	value(#{cs_num},#{re_content})
+</insert>
+
+<!-- 댓글여부 변경하기  -->
+  <update id="proupdate" parameterType="CustomerserviceVO">
+    update customerservice set
+    cs_process = "답변완료"
+    where cs_num = #{cs_num}
+  </update>
+
+<!-- 단일 댓글 조회 -->
+<select id="replySelect" parameterType="Cs_replyVO" resultType="Cs_replyVO">
+	select re_rno, cs_num, re_content, re_date
+	from cs_reply
+	where cs_num = #{cs_num}
+	and re_rno = #{re_rno}					
+</select>
+	
+
+<!-- 댓글 수정 -->
+<update id="replyModify" parameterType="Cs_replyVO">
+	update cs_reply set
+	re_content = #{re_content}
+	where re_rno = #{re_rno}
+	and cs_num = #{cs_num}	
+</update>
+
+<!-- 댓글 삭제 -->
+<delete id="replyDelete" parameterType="Cs_replyVO">
+	delete from cs_reply
+	where re_rno = #{re_rno}
+	and cs_num = ${cs_num}	
+</delete>
+
+	
+
+	
+
+</mapper>    

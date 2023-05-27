@@ -49,6 +49,7 @@ import net.coobird.thumbnailator.Thumbnails;
 public class ProductController {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
+	private static final String PATH = System.getProperty("user.home") + "/git/team22/Team22/src/main/webapp/resources/images/";
 	@Autowired
 	ProductService service;
 	
@@ -185,7 +186,7 @@ public class ProductController {
 			fileList.add(oFileName);
 			
 			File file = 
-					new File("C:\\Users\\ITWILL\\git\\team22\\Team22\\src\\main\\webapp\\resources\\images\\" 
+					new File(PATH
 			+ fileName);
 			
 			if(mFile.getSize() != 0) {
@@ -197,7 +198,7 @@ public class ProductController {
 				
 				mFile.transferTo(
 						new File(
-								"C:\\Users\\ITWILL\\git\\team22\\Team22\\src\\main\\webapp\\resources\\images\\" 
+								PATH 
 						+ oFileName));
 				
 			}
@@ -214,7 +215,7 @@ public class ProductController {
 		// 파일의 정보
 		logger.info("fileName : " + fileName);
 		// 다운로드할 파일의 위치
-		String downFile = "C:\\Users\\ITWILL\\git\\team22\\Team22\\src\\main\\webapp\\resources\\images\\" + fileName;
+		String downFile = PATH + fileName;
 		
 		File file = new File(downFile);
 		
@@ -245,13 +246,13 @@ public class ProductController {
 	public void thumbnail(@RequestParam("fileName") String fileName
 						,HttpServletResponse response) throws Exception {
 		logger.info("Controller - 썸네일 파일 생성 및 호출");
-		String path = "C:\\Users\\ITWILL\\git\\team22\\Team22\\src\\main\\webapp\\resources\\images\\" + fileName;
+		String path = PATH + fileName;
 		
 		File file = new File(path);
 		String oFileName = fileName.substring(0, fileName.lastIndexOf('.'));
 		logger.info(oFileName);
 		
-		File thumb = new File("C:\\Users\\ITWILL\\git\\team22\\Team22\\src\\main\\webapp\\resources\\images\\thumb\\"
+		File thumb = new File(PATH + "thumb\\"
 				+ oFileName + ".png");
 		response.setContentType("image/png");
 		

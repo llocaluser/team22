@@ -6,11 +6,11 @@
 <mapper namespace="com.market.mapper.auctionMapper">
 
 	<select id="getAList" resultType="com.market.domain.AuctionVO">
-		select au_num, au_endTime, max(au_bidPrice) as au_bidPrice, au_sellerId, au_pic, au_title, au_startPrice
+		select au_num, au_endTime, max(au_bidPrice) as au_bidPrice, au_sellerId, au_pic, au_title, au_startPrice, count(au_num)-1 as countA
 		from auction
 		where au_status = 0
 		group by au_num
-		order by ${order} ${met}
+		order by ${order} ${met}, au_startPrice asc
 		limit #{pageStart},#{pageSize}
 		
 	</select>
@@ -25,7 +25,7 @@
 	</select>
 	
 	<select id="bestAList" resultType="com.market.domain.AuctionVO">
-		select au_num, au_endTime, max(au_bidPrice) as au_bidPrice, au_sellerId, au_pic, au_title, au_status, au_startPrice
+		select au_num, au_endTime, max(au_bidPrice) as au_bidPrice, au_sellerId, au_pic, au_title, au_status, au_startPrice, count(au_num)-1 as countA
 		from auction
 		group by au_num
 		having au_status = 0
@@ -34,7 +34,7 @@
 	</select>
 	
 	<select id="nowBest" resultType="com.market.domain.AuctionVO">
-		select *
+		select * 
 		from auction
 		where au_num = (select au_num
 						from auction
@@ -120,6 +120,22 @@
 		insert into trade(buy_mem_id, sell_mem_id, prod_sell_date, type_div, au_num, product_title)
 		values(#{au_buyerId}, #{au_sellerId}, now(), 'au', #{au_num}, #{au_title})
 	</insert>
+	
+	<update id="endConfirm">
+		update auction set au_status = 2
+		where au_num = #{au_num}
+	</update>
+	
+	<update id="endATime">
+		update auction set au_status = 1
+		<![CDATA[where au_status = 0 and au_endTime < now()]]>
+	</update>
+	
+	<select id="countA" resultType="int">
+		select count(au_num)-1
+		from auction
+		where au_num = #{au_num}
+	</select>
 
 </mapper>
 

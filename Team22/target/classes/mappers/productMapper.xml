@@ -63,14 +63,20 @@
 		SELECT * FROM PRODUCT
 		<where>
 			PRODUCT_STATUS = 0
-	        <if test="grade != null">
+	        <if test="grade != null and grade != ''">
 	            AND PRODUCT_GRADE LIKE CONCAT('%', #{grade}, '%')
 	        </if>
-	        <if test="category != null">
+	        <if test="category != null and category != ''">
 	            AND PRODUCT_CATE LIKE CONCAT('%', #{category}, '%')
 	        </if>
-	        <if test="title != null">
+	        <if test="title != null and title != ''">
 	            AND PRODUCT_TITLE LIKE CONCAT('%', #{title}, '%')
+	        </if>
+	        <if test="min != null">
+	        	and product_price <![CDATA[ >= ]]> #{min}
+	        </if>
+	        <if test="max != null">
+	        	and product_price <![CDATA[ <= ]]> #{max}
 	        </if>
 	    </where>
 		<choose>
@@ -145,7 +151,7 @@
 		SELECT * FROM
 						(SELECT *
 						FROM PRODUCT
-						WHERE PRODUCT_CATE = #{PRODUCT_CATE}
+						WHERE PRODUCT_CATE = #{PRODUCT_CATE} and product_status = 0
 						ORDER BY PRODUCT_FAVORITE DESC, PRODUCT_READCOUNT DESC
 						LIMIT 30) AS TOP
 		ORDER BY RAND()
@@ -189,6 +195,59 @@
 	<select id="getTotalCount" resultType="int">
 		select count(product_num) from product
 	</select>
+	
+	<!-- 상품 정보 수정 -->
+	<update id="updateProd">
+		update product set product_title = #{product_title}, product_content = #{product_content},
+		product_price = #{product_price}, product_grade = #{product_grade} where product_num = #{product_num}
+	</update>
+	<!-- 상품 정보 수정 -->
+	
+	<!-- 상품 정보 삭제 -->
+	<delete id="deleteProd">
+		delete from product where product_num = #{pnum}
+	</delete>
+	<!-- 상품 정보 삭제 -->
+	
+	<!-- 찜 - 상위 카테고리 가져오기 -->
+	<select id="getFavProdCate" resultType="string">
+		WITH c AS (
+		  SELECT product_cate, COUNT(product_cate) AS count
+		  FROM product 
+		  WHERE product_num IN (SELECT product_num FROM favorite WHERE member_id = #{member_id}) and product_status = 0
+		  GROUP BY product_cate
+		)
+		SELECT product_cate
+		FROM c
+		WHERE count = (SELECT MAX(count) FROM c)
+		ORDER BY RAND()
+		LIMIT 1
+	</select>
+	<!-- 찜 - 상위 카테고리 가져오기 -->
+	
+	<!-- 찜 - 좋아요 기반 추천 목록 가져오기  -->
+	<select id="getFavProdLike" resultType="productVO">
+		SELECT * FROM (
+				    	SELECT * FROM product where product_status = 0 ORDER BY product_favorite DESC LIMIT 20
+		) p ORDER BY RAND() LIMIT 8
+	</select>
+	<!-- 찜 - 좋아요 기반 추천 목록 가져오기  -->
+	
+	<!-- 찜 - 등록일자 대비 조회수 기반 추천 목록 가져오기 -->
+	<select id="getFavProdInterest" resultType="productVO">
+		SELECT *
+		FROM (
+			SELECT *
+			FROM product
+			where product_status = 0
+			ORDER BY (product_readcount / CASE WHEN TIMESTAMPDIFF(DAY, product_date, NOW()) = 0 THEN 1 ELSE TIMESTAMPDIFF(DAY, product_date, NOW()) END) DESC
+			LIMIT 20
+		) AS sub
+		ORDER BY RAND()
+		LIMIT 8
+	</select>
+	<!-- 찜 - 등록일자 대비 조회수 기반 추천 목록 가져오기 -->
+	
 </mapper>
 
 
