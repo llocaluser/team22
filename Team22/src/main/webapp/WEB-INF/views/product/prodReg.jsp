@@ -161,7 +161,10 @@
 	            const newFileInput = document.createElement('input');
 	            newFileInput.type = 'file';
 	            newFileInput.name = 'product_pics';
-	            newFileInput.setAttribute('onchange', 'validateForm()');
+	            newFileInput.onchange = function() {
+	                validateForm();
+	                validateImageFile(newFileInput);
+	            };
 
 	            newDivFileInsert.appendChild(newFileInput);
 
@@ -185,7 +188,27 @@
 	            fileInputCounter++;
 	        }
 	    });
+	    
+	    const initialFileInput = document.querySelector('input[name="product_pics"]');
+	    initialFileInput.onchange = function() {
+	        validateForm();
+	        validateImageFile(initialFileInput);
+	    };
 	});
+
+	function validateImageFile(fileInput) {
+	    if (fileInput.files.length > 0) {
+	        const file = fileInput.files[0];
+	        const fileName = file.name;
+	        const fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+
+	        if (['jpg', 'jpeg', 'png'].indexOf(fileExtension) < 0) {
+	            alert('올바른 이미지 형식을 업로드해주세요. (jpg, jpeg, png)');
+	            fileInput.value = '';
+	        }
+	    }
+	}
+
 
 
 	
