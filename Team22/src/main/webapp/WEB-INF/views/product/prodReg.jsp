@@ -202,8 +202,8 @@
 	        const fileName = file.name;
 	        const fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
 
-	        if (['jpg', 'jpeg', 'png'].indexOf(fileExtension) < 0) {
-	            alert('올바른 이미지 형식을 업로드해주세요. (jpg, jpeg, png)');
+	        if (['jpg', 'jpeg', 'png', 'gif'].indexOf(fileExtension) < 0) {
+	            alert('올바른 이미지 형식을 업로드해주세요. (jpg, jpeg, png, gif)');
 	            fileInput.value = '';
 	        }
 	    }

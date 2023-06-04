@@ -129,24 +129,10 @@ public class ProductServiceImpl implements ProductService{
 			if(!file.isEmpty()) {
 			    UUID uuid = UUID.randomUUID();
 			    String origin = file.getOriginalFilename();
-//			    String fileName = uuid + "-" + origin;
 			    String fileName = origin;
 			    File saveFile = new File(path, fileName);
 			    file.transferTo(saveFile);
-			    
-			    // Thumbnail part
-			    
-//			    File thumbnail = new File(path+"\\thumb", "thumb_" + fileName);
-//			    
-//			    BufferedImage bo_image = ImageIO.read(file.getInputStream());
-//			    
-//			    double ratio = 3;
-//	            int width = (int) (bo_image.getWidth() / ratio);
-//	            int height = (int) (bo_image.getHeight() / ratio);
-//	            
-//	            Thumbnails.of(saveFile).size(width, height).toFile(thumbnail);
-			    
-			    // Thumbnail part
+			  
 			    
 			    if(sb.length() > 0) {
 			    	sb.append(",");
